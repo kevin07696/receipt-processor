@@ -44,11 +44,11 @@ var opts = receipt.Options{
 }
 
 var mockRepository = MockReceiptRepository{
-	WriteReceiptScoreMock: func(ctx context.Context, id string, points uint16, scores map[string]uint16) domain.StatusCode {
+	WriteReceiptScoreMock: func(ctx context.Context, id string, points int64, scores map[string]int64) domain.StatusCode {
 		scores[id] = points
 		return domain.StatusOK
 	},
-	ReadReceiptScoreMock: func(ctx context.Context, id string, scores map[string]uint16) (uint16, domain.StatusCode) {
+	ReadReceiptScoreMock: func(ctx context.Context, id string, scores map[string]int64) (int64, domain.StatusCode) {
 		points, ok := scores[id]
 		if !ok {
 			return points, domain.ErrNotFound
@@ -83,15 +83,28 @@ func TestProcessReceipt(t *testing.T) {
 		{
 			title: "GivenAValidRequest_ReturnID",
 			mockRepository: MockReceiptRepository{
-				ReadReceiptScoreMock: func(ctx context.Context, id string, scores map[string]uint16) (uint16, domain.StatusCode) {
+				ReadReceiptScoreMock: func(ctx context.Context, id string, scores map[string]int64) (int64, domain.StatusCode) {
 					return 0, domain.ErrNotFound
 				},
-				WriteReceiptScoreMock: func(ctx context.Context, id string, points uint16, scores map[string]uint16) domain.StatusCode {
+				WriteReceiptScoreMock: func(ctx context.Context, id string, points int64, scores map[string]int64) domain.StatusCode {
 					return domain.StatusOK
 				},
 			},
 			expectedResponse: receipt.ReceiptProcessorResponse{ID: request.ID},
 			expectedStatus:   domain.StatusOK,
+		},
+		{
+			title: "GivenAValidRequest_ReturnInternalServerError",
+			mockRepository: MockReceiptRepository{
+				ReadReceiptScoreMock: func(ctx context.Context, id string, scores map[string]int64) (int64, domain.StatusCode) {
+					return 0, domain.ErrNotFound
+				},
+				WriteReceiptScoreMock: func(ctx context.Context, id string, points int64, scores map[string]int64) domain.StatusCode {
+					return domain.ErrInternal
+				},
+			},
+			expectedResponse: receipt.ReceiptProcessorResponse{},
+			expectedStatus:   domain.ErrInternal,
 		},
 	}
 
@@ -108,7 +121,7 @@ func TestProcessReceipt(t *testing.T) {
 }
 
 func TestGetRequest(t *testing.T) {
-	scores := map[string]uint16{}
+	scores := map[string]int64{}
 	id := opts.GenerateID("receipt data")
 	scores[id] = 28
 
@@ -156,7 +169,7 @@ func TestProcessReceiptRules(t *testing.T) {
 				Receipt: receipt.Receipt{
 					Retailer:     "Target",
 					PurchaseDate: "2022-01-01",
-					PurchaseTime: "13:01",
+					PurchaseTime: "14:01",
 					Items: []receipt.Item{
 						{
 							ShortDescription: "Mountain Dew 12PK",
@@ -182,7 +195,7 @@ func TestProcessReceiptRules(t *testing.T) {
 					Total: "35.00",
 				},
 			},
-			expectedScoreResponse: receipt.ReceiptScoreResponse{Points: 28},
+			expectedScoreResponse: receipt.ReceiptScoreResponse{Points: 113},
 		},
 		{
 			title: "GivenAZeroRequest_Return0",
@@ -637,7 +650,7 @@ func TestProcessReceiptRules(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.title, func(t *testing.T) {
-			mockRepository.Scores = map[string]uint16{}
+			mockRepository.Scores = map[string]int64{}
 
 			services := receipt.NewReceiptProcessorService(mockRepository, opts, mults)
 
