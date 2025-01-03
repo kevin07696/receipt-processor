@@ -79,18 +79,18 @@ func loadEnvConfig() Config {
 	env := map[string]interface{}{
 		"APP_ENV":              "",
 		"APP_PORT":             int(0),
-		"MULT_RECEIPT":         uint16(0),
-		"MULT_ROUND_TOTAL":     uint16(0),
-		"MULT_DIVISIBLE_TOTAL": uint16(0),
+		"MULT_RECEIPT":         int64(0),
+		"MULT_ROUND_TOTAL":     int64(0),
+		"MULT_DIVISIBLE_TOTAL": int64(0),
 		"MULT_ITEMS":           float64(0),
 		"MULT_DESCRIPTION":     float64(0),
-		"MULT_PURCHASE_TIME":   uint16(0),
-		"MULT_PURCHASE_DATE":   uint16(0),
+		"MULT_PURCHASE_TIME":   int64(0),
+		"MULT_PURCHASE_DATE":   int64(0),
 		"START_TIME":           "",
 		"END_TIME":             "",
 		"TOTAL_MULTIPLE":       float64(0),
-		"ITEMS_MULTIPLE":       uint16(0),
-		"DESCRIPTION_MULTIPLE": uint16(0),
+		"ITEMS_MULTIPLE":       int64(0),
+		"DESCRIPTION_MULTIPLE": int64(0),
 	}
 
 	for k := range env {
@@ -103,9 +103,9 @@ func loadEnvConfig() Config {
 		switch env[k].(type) {
 		case string:
 			env[k] = val
-		case uint16:
+		case int64:
 			if parsedVal, err := strconv.ParseUint(val, 10, 16); err == nil {
-				env[k] = uint16(parsedVal)
+				env[k] = int64(parsedVal)
 			} else {
 				log.Fatalf("Error parsing %s: %v", k, err)
 			}
@@ -130,20 +130,20 @@ func loadEnvConfig() Config {
 		AppEnv: env["APP_ENV"].(string),
 		Port:   env["APP_PORT"].(int),
 		Multipliers: dReceipt.Multipliers{
-			Retailer:       env["MULT_RECEIPT"].(uint16),
-			RoundTotal:     env["MULT_ROUND_TOTAL"].(uint16),
-			DivisibleTotal: env["MULT_DIVISIBLE_TOTAL"].(uint16),
+			Retailer:       env["MULT_RECEIPT"].(int64),
+			RoundTotal:     env["MULT_ROUND_TOTAL"].(int64),
+			DivisibleTotal: env["MULT_DIVISIBLE_TOTAL"].(int64),
 			Items:          env["MULT_ITEMS"].(float64),
 			Description:    env["MULT_DESCRIPTION"].(float64),
-			PurchaseTime:   env["MULT_PURCHASE_TIME"].(uint16),
-			PurchaseDate:   env["MULT_PURCHASE_DATE"].(uint16),
+			PurchaseTime:   env["MULT_PURCHASE_TIME"].(int64),
+			PurchaseDate:   env["MULT_PURCHASE_DATE"].(int64),
 		},
 		Options: dReceipt.Options{
 			StartPurchaseTime:   env["START_TIME"].(string),
 			EndPurchaseTime:     env["END_TIME"].(string),
 			TotalMultiple:       env["TOTAL_MULTIPLE"].(float64),
-			ItemsMultiple:       env["ITEMS_MULTIPLE"].(uint16),
-			DescriptionMultiple: env["DESCRIPTION_MULTIPLE"].(uint16),
+			ItemsMultiple:       env["ITEMS_MULTIPLE"].(int64),
+			DescriptionMultiple: env["DESCRIPTION_MULTIPLE"].(int64),
 		},
 	}
 

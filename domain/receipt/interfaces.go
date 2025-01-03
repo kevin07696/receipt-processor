@@ -13,8 +13,8 @@ type IReceiptProcessorService interface {
 }
 
 type IReceiptProcessorRepository interface {
-	WriteReceiptScore(ctx context.Context, id string, value uint16) domain.StatusCode
-	ReadReceiptScore(ctx context.Context, id string) (uint16, domain.StatusCode)
+	WriteReceiptScore(ctx context.Context, id string, value int64) domain.StatusCode
+	ReadReceiptScore(ctx context.Context, id string) (int64, domain.StatusCode)
 }
 
 type IRepository interface {

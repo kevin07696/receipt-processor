@@ -31,8 +31,7 @@ func ProcessReceipt(receiptAPI receipt.IReceiptProcessorService) http.HandlerFun
 			return
 		}
 
-		isValid := input.Validate()
-		if !isValid {
+		if !input.Validate(ctx) {
 			http.Error(w, domain.ErrorToCodes[domain.ErrBadRequest].Message, domain.ErrorToCodes[domain.ErrBadRequest].Code)
 			return
 

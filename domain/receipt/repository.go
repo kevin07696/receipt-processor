@@ -16,15 +16,15 @@ func NewReceiptProcessorRepository(cache IRepository) *ReceiptProcessorRepositor
 	}
 }
 
-func (r *ReceiptProcessorRepository) WriteReceiptScore(ctx context.Context, id string, points uint16) domain.StatusCode {
+func (r *ReceiptProcessorRepository) WriteReceiptScore(ctx context.Context, id string, points int64) domain.StatusCode {
 	return r.cache.Set(ctx, id, points)
 }
 
-func (r ReceiptProcessorRepository) ReadReceiptScore(ctx context.Context, id string) (uint16, domain.StatusCode) {
+func (r ReceiptProcessorRepository) ReadReceiptScore(ctx context.Context, id string) (int64, domain.StatusCode) {
 	score, status := r.cache.Get(ctx, id)
 	if status > 0 {
 		return 0, status
 	}
 
-	return score.(uint16), domain.StatusOK
+	return score.(int64), domain.StatusOK
 }
