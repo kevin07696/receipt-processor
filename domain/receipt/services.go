@@ -1,8 +1,11 @@
 package receipt
 
 import (
+	"bytes"
 	"context"
+	"fmt"
 	"log"
+	"log/slog"
 	"math"
 	"strconv"
 	"unicode"
@@ -20,7 +23,7 @@ type Options struct {
 }
 
 type Multipliers struct {
-	Receipt        uint16
+	Retailer       uint16
 	RoundTotal     uint16
 	DivisibleTotal uint16
 	Items          float64
@@ -58,13 +61,15 @@ func (rps *ReceiptProcessorService) GenerateID(ctx context.Context, input string
 
 func (rps *ReceiptProcessorService) ProcessReceipt(ctx context.Context, request ReceiptProcessorRequest) (ReceiptProcessorResponse, domain.StatusCode) {
 	var points uint16
-	points += rps.pointsForEachAlphaNumeric(request.Receipt.Retailer)
-	points += rps.pointsForEachDivisibleItemDescription(request.Receipt.Items)
-	points += rps.pointsForEachItemMultiples(len(request.Receipt.Items))
-	points += rps.pointsIfRoundTotal(request.Receipt.Total)
-	points += rps.pointsIfDivisibleTotal(request.Receipt.Total)
-	points += rps.pointsIfOddPurchaseDate(request.Receipt.PurchaseDate)
-	points += rps.pointsIfBetweenPurchaseTime(request.Receipt.PurchaseTime)
+	points += rps.pointsForEachAlphaNumeric(ctx, request.Receipt.Retailer)
+	points += rps.pointsForEachItemMultiples(ctx, len(request.Receipt.Items))
+	points += rps.pointsIfRoundTotal(ctx, request.Receipt.Total)
+	points += rps.pointsIfDivisibleTotal(ctx, request.Receipt.Total)
+	points += rps.pointsIfOddPurchaseDate(ctx, request.Receipt.PurchaseDate)
+	points += rps.pointsIfBetweenPurchaseTime(ctx, request.Receipt.PurchaseTime)
+	points += rps.pointsForEachDivisibleItemDescription(ctx, request.Receipt.Items)
+
+	slog.InfoContext(ctx, fmt.Sprintf("Total Points: %d", points))
 
 	status := rps.repository.WriteReceiptScore(ctx, request.ID, points)
 	if status > 0 {
@@ -91,34 +96,47 @@ func (rps ReceiptProcessorService) GetReceiptScore(ctx context.Context, request 
 	return ReceiptScoreResponse{Points: points}, domain.StatusOK
 }
 
-func (rps ReceiptProcessorService) pointsForEachAlphaNumeric(name string) uint16 {
-	var points uint16
+func (rps ReceiptProcessorService) pointsForEachAlphaNumeric(ctx context.Context, name string) uint16 {
+	var alphaNums uint16
+	var buf bytes.Buffer
 	for _, r := range name {
 		if unicode.IsLetter(r) || unicode.IsDigit(r) {
-			points++
+			alphaNums++
+		} else {
+			buf.WriteRune(r)
 		}
 	}
 
-	return points * rps.mults.Receipt
+	points := alphaNums * rps.mults.Retailer
+
+	if points > 0 {
+		var message string
+		if buf.Len() > 0 {
+			message = fmt.Sprintf("%d points - retailer name %s has %d alphanumeric characters note: '&' is not alphanumeric", points, name, alphaNums)
+		} else {
+			message = fmt.Sprintf("%d points - retailer name has %d characters", points, alphaNums)
+		}
+		slog.DebugContext(ctx, message)
+	}
+
+	return points
 }
 
-func (rps ReceiptProcessorService) pointsIfRoundTotal(total string) uint16 {
+func (rps ReceiptProcessorService) pointsIfRoundTotal(ctx context.Context, total string) uint16 {
 	n := len(total)
-	var decimalPosition int
-	for i := n - 1; i > -1; i-- {
-		if total[i] == byte('.') {
-			decimalPosition = i
-		}
-	}
+	
+	decimals := total[n-2:]
 
-	if decimalPosition > 0 && total[decimalPosition+1:] > "00" {
+	if decimals > "00" {
 		return 0
 	}
+
+	slog.DebugContext(ctx, fmt.Sprintf("%d points - total is a round dollar amount", rps.mults.RoundTotal))
 
 	return rps.mults.RoundTotal
 }
 
-func (rps ReceiptProcessorService) pointsIfDivisibleTotal(total string) uint16 {
+func (rps ReceiptProcessorService) pointsIfDivisibleTotal(ctx context.Context, total string) uint16 {
 	currency, err := strconv.ParseFloat(total, 64)
 	if err != nil {
 		log.Fatalf("Failed to parse total, %s: %v", total, err)
@@ -132,25 +150,31 @@ func (rps ReceiptProcessorService) pointsIfDivisibleTotal(total string) uint16 {
 	if remainder > 0 {
 		return 0
 	}
+
+	slog.DebugContext(ctx, fmt.Sprintf("%d points - total is a multiple of %.2f", rps.mults.DivisibleTotal, rps.opts.TotalMultiple))
+
 	return rps.mults.DivisibleTotal
 }
 
-func (rps ReceiptProcessorService) pointsForEachItemMultiples(itemLength int) uint16 {
+func (rps ReceiptProcessorService) pointsForEachItemMultiples(ctx context.Context, itemLength int) uint16 {
 	multiples := float64(itemLength) / float64(rps.opts.ItemsMultiple)
+
+	slog.DebugContext(ctx, fmt.Sprintf("%d items (%d batches @ %.2f points each)", itemLength, rps.opts.ItemsMultiple, rps.mults.Items))
 	return uint16(math.Floor(multiples) * rps.mults.Items)
 }
 
-func (rps ReceiptProcessorService) pointsForEachDivisibleItemDescription(items []Item) uint16 {
-	var points uint16
+func (rps ReceiptProcessorService) pointsForEachDivisibleItemDescription(ctx context.Context, items []Item) uint16 {
+	var total uint16
 	var n, spaces int
 
 Outerloop:
 	for _, item := range items {
-		spaces = 0
+		var points uint16
+		var left, right int
 		n = len(item.ShortDescription)
 		for i := range item.ShortDescription {
 			if item.ShortDescription[i] == byte(' ') {
-				spaces++
+				left++
 			} else {
 				break
 			}
@@ -162,13 +186,13 @@ Outerloop:
 
 		for i := n - 1; i >= 0; i-- {
 			if item.ShortDescription[i] == byte(' ') {
-				spaces++
+				right++
 			} else {
 				break
 			}
 		}
 
-		trimmedLength := n - spaces
+		trimmedLength := n - left - right
 		if trimmedLength%int(rps.opts.DescriptionMultiple) != 0 {
 			continue Outerloop
 		}
@@ -178,12 +202,19 @@ Outerloop:
 			log.Fatalf("Failed to parse float, %s: %v", item.Price, err)
 		}
 
-		points += uint16(math.Ceil(price * rps.mults.Description))
+		points = uint16(math.Ceil(price * rps.mults.Description))
+
+		trimmedDescription := item.ShortDescription[left : n-right]
+
+		slog.DebugContext(ctx, fmt.Sprintf(`%d Points - "%s" is %d characters (a multiple of %d) item price of %s * %.2f = %.2f is rounded up is %d`,
+			points, trimmedDescription, trimmedLength, rps.opts.DescriptionMultiple, item.Price, rps.mults.Description, price * rps.mults.Description, points))
+
+		total += points
 	}
-	return points
+	return total
 }
 
-func (rps ReceiptProcessorService) pointsIfOddPurchaseDate(date string) uint16 {
+func (rps ReceiptProcessorService) pointsIfOddPurchaseDate(ctx context.Context, date string) uint16 {
 	dayNum, err := strconv.Atoi(date[8:])
 	if err != nil {
 		log.Fatalf("Failed to parse day. Check validation method: %v", err)
@@ -192,10 +223,12 @@ func (rps ReceiptProcessorService) pointsIfOddPurchaseDate(date string) uint16 {
 		return 0
 	}
 
+	slog.DebugContext(ctx, fmt.Sprintf("%d points - purchase day is odd", rps.mults.PurchaseDate))
+
 	return rps.mults.PurchaseDate
 }
 
-func (rps ReceiptProcessorService) pointsIfBetweenPurchaseTime(time string) uint16 {
+func (rps ReceiptProcessorService) pointsIfBetweenPurchaseTime(ctx context.Context, time string) uint16 {
 	if time[:2] == rps.opts.StartPurchaseTime[:2] && time[3:] == rps.opts.StartPurchaseTime[3:] {
 		return 0
 	}
@@ -203,6 +236,8 @@ func (rps ReceiptProcessorService) pointsIfBetweenPurchaseTime(time string) uint
 	if rps.opts.StartPurchaseTime[:2] > time[:2] || time[:2] >= rps.opts.EndPurchaseTime[:2] {
 		return 0
 	}
+
+	slog.DebugContext(ctx, fmt.Sprintf("%d points - %s is between %s and %s", rps.mults.PurchaseTime, time, rps.opts.StartPurchaseTime, rps.opts.EndPurchaseTime))
 
 	return rps.mults.PurchaseTime
 }

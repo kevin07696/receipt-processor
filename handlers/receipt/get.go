@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -27,6 +28,7 @@ func GetScore(receiptAPI receipt.IReceiptProcessorService) http.HandlerFunc {
 		// Assuming the route is always valid
 		id := segments[1]
 		if err := uuid.Validate(id); err != nil {
+			slog.DebugContext(ctx, "StatusBadRequest: uuid is invalid", slog.String("id", id), slog.Any("error", err))
 			http.Error(w, domain.ErrorToCodes[domain.ErrBadRequest].Message, domain.ErrorToCodes[domain.ErrBadRequest].Code)
 			return
 		}

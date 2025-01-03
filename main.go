@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/sha256"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"strconv"
@@ -10,10 +11,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 
-	"github.com/kevin07696/receipt-processor/adapters"
-	dreceipt "github.com/kevin07696/receipt-processor/domain/receipt"
+	"github.com/kevin07696/receipt-processor/adapters/caches"
+	"github.com/kevin07696/receipt-processor/adapters/loggers"
+	dReceipt "github.com/kevin07696/receipt-processor/domain/receipt"
 	"github.com/kevin07696/receipt-processor/handlers"
-	hreceipt "github.com/kevin07696/receipt-processor/handlers/receipt"
+	hReceipt "github.com/kevin07696/receipt-processor/handlers/receipt"
 )
 
 func main() {
@@ -21,11 +23,19 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-
 	env := loadEnvConfig()
 
-	cache := adapters.NewLRUCache(200000)
-	var repository dreceipt.IReceiptProcessorRepository = dreceipt.NewReceiptProcessorRepository(&cache)
+	h := loggers.ContextHandler{}
+	if env.AppEnv == "prod" {
+		h.Handler = slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{AddSource: true, Level: slog.LevelInfo})
+	} else {
+		h.Handler = slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug})
+	}
+	logger := slog.New(h)
+	slog.SetDefault(logger)
+
+	cache := caches.NewLRUCache(200000)
+	var repository dReceipt.IReceiptProcessorRepository = dReceipt.NewReceiptProcessorRepository(&cache)
 
 	env.Options.GenerateID = func(input string) string {
 		if len(input) == 0 {
@@ -42,16 +52,18 @@ func main() {
 		return hashUUID.String()
 	}
 
-	receiptAPI := dreceipt.NewReceiptProcessorService(repository, env.Options, env.Multipliers)
+	receiptAPI := dReceipt.NewReceiptProcessorService(repository, env.Options, env.Multipliers)
 
 	router := http.NewServeMux()
 
-	hreceipt.Handle(router, &receiptAPI)
+	hReceipt.Handle(router, &receiptAPI)
 
 	app := handlers.NewApp(env.Port, router)
 
 	log.Printf("Starting server at :%d\n", env.Port)
-	if err := app.Run(handlers.RequestLoggerMiddleware); err != nil {
+
+	err = app.Run(handlers.RequestLoggerMiddleware, handlers.RequestIDMiddleware)
+	if err != nil {
 		log.Fatalf("Server failed to start: %v", err)
 	}
 }
@@ -59,8 +71,8 @@ func main() {
 type Config struct {
 	AppEnv      string
 	Port        int
-	Multipliers dreceipt.Multipliers
-	Options     dreceipt.Options
+	Multipliers dReceipt.Multipliers
+	Options     dReceipt.Options
 }
 
 func loadEnvConfig() Config {
@@ -117,8 +129,8 @@ func loadEnvConfig() Config {
 	config := Config{
 		AppEnv: env["APP_ENV"].(string),
 		Port:   env["APP_PORT"].(int),
-		Multipliers: dreceipt.Multipliers{
-			Receipt:        env["MULT_RECEIPT"].(uint16),
+		Multipliers: dReceipt.Multipliers{
+			Retailer:       env["MULT_RECEIPT"].(uint16),
 			RoundTotal:     env["MULT_ROUND_TOTAL"].(uint16),
 			DivisibleTotal: env["MULT_DIVISIBLE_TOTAL"].(uint16),
 			Items:          env["MULT_ITEMS"].(float64),
@@ -126,7 +138,7 @@ func loadEnvConfig() Config {
 			PurchaseTime:   env["MULT_PURCHASE_TIME"].(uint16),
 			PurchaseDate:   env["MULT_PURCHASE_DATE"].(uint16),
 		},
-		Options: dreceipt.Options{
+		Options: dReceipt.Options{
 			StartPurchaseTime:   env["START_TIME"].(string),
 			EndPurchaseTime:     env["END_TIME"].(string),
 			TotalMultiple:       env["TOTAL_MULTIPLE"].(float64),
