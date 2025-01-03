@@ -1,4 +1,4 @@
-package adapters
+package caches
 
 import (
 	"container/list"
