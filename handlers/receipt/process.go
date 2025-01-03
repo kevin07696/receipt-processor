@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/kevin07696/receipt-processor/domain"
@@ -19,18 +20,19 @@ func ProcessReceipt(receiptAPI receipt.IReceiptProcessorService) http.HandlerFun
 
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
-			log.Fatalf("Failed to read request body: %v", err)
+			slog.ErrorContext(ctx, "Failed to read request body.", slog.Any("error", err))
+			os.Exit(1)
 		}
 
 		var input receipt.Receipt
 		if err := json.Unmarshal(body, &input); err != nil {
+			slog.DebugContext(ctx, "Unmarshal Error: Failed to unmarshal receipt.", slog.Any("error", err))
 			http.Error(w, domain.ErrorToCodes[domain.ErrBadRequest].Message, domain.ErrorToCodes[domain.ErrBadRequest].Code)
 			return
 		}
 
 		isValid := input.Validate()
 		if !isValid {
-			log.Printf("Validation Error: %v", err)
 			http.Error(w, domain.ErrorToCodes[domain.ErrBadRequest].Message, domain.ErrorToCodes[domain.ErrBadRequest].Code)
 			return
 
@@ -46,7 +48,8 @@ func ProcessReceipt(receiptAPI receipt.IReceiptProcessorService) http.HandlerFun
 
 		jsonResponse, err := json.Marshal(response)
 		if err != nil {
-			log.Fatalf("Failed to marshal response: %v", err)
+			slog.ErrorContext(ctx, "Marshal Error: Failed to marshal response.", slog.Any("error", err))
+			os.Exit(1)
 		}
 
 		w.WriteHeader(http.StatusOK)

@@ -16,11 +16,12 @@ const (
 
 type StatusMessage struct {
 	Code    int
+	Name    string
 	Message string
 }
 
 var ErrorToCodes = []StatusMessage{
-	{Code: http.StatusOK, Message: "Success!"},
-	{Code: http.StatusNotFound, Message: "No receipt found for that ID."},
-	{Code: http.StatusBadRequest, Message: "The receipt is invalid."},
+	{Code: http.StatusOK, Name: "StatusOK", Message: "Success!"},
+	{Code: http.StatusNotFound, Name: "ErrNotFound", Message: "No receipt found for that ID."},
+	{Code: http.StatusBadRequest, Name: "ErrBadRequest", Message: "The receipt is invalid."},
 }

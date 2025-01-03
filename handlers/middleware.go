@@ -2,7 +2,11 @@ package handlers
 
 import (
 	"log"
+	"log/slog"
 	"net/http"
+
+	"github.com/google/uuid"
+	"github.com/kevin07696/receipt-processor/adapters/loggers"
 )
 
 type Middleware func(http.Handler) http.HandlerFunc
@@ -19,7 +23,16 @@ func MiddlewareChain(middleware ...Middleware) Middleware {
 
 func RequestLoggerMiddleware(next http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("method %s. path: %s", r.Method, r.URL.Path)
+		log.Printf("Method %s, Path: %s", r.Method, r.URL.Path)
 		next.ServeHTTP(w, r)
+	}
+}
+
+var RequestID = "RequestID"
+
+func RequestIDMiddleware(next http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := loggers.AppendCtx(r.Context(), slog.String(RequestID, uuid.NewString()))
+		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 }

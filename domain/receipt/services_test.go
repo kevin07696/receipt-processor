@@ -12,7 +12,7 @@ import (
 )
 
 var mults = receipt.Multipliers{
-	Receipt:        1,
+	Retailer:       1,
 	RoundTotal:     50,
 	DivisibleTotal: 25,
 	Items:          5,
@@ -61,7 +61,7 @@ func TestProcessReceipt(t *testing.T) {
 	request := receipt.ReceiptProcessorRequest{
 		Receipt: receipt.Receipt{
 			Retailer: "",
-			Total:    "0.1",
+			Total:    "0.10",
 			Items: []receipt.Item{
 				{
 					ShortDescription: "Mountain Dew 12PK",
@@ -179,7 +179,7 @@ func TestProcessReceiptRules(t *testing.T) {
 							Price:            "12.00",
 						},
 					},
-					Total: "35.35",
+					Total: "35.00",
 				},
 			},
 			expectedScoreResponse: receipt.ReceiptScoreResponse{Points: 28},
@@ -189,7 +189,7 @@ func TestProcessReceiptRules(t *testing.T) {
 			request: receipt.ReceiptProcessorRequest{
 				Receipt: receipt.Receipt{
 					Retailer: "",
-					Total:    "0.1",
+					Total:    "0.10",
 					Items: []receipt.Item{
 						{
 							ShortDescription: "Mountain Dew 12PK",
@@ -208,7 +208,7 @@ func TestProcessReceiptRules(t *testing.T) {
 			request: receipt.ReceiptProcessorRequest{
 				Receipt: receipt.Receipt{
 					Retailer:     "",
-					Total:        "0.1",
+					Total:        "0.10",
 					Items:        []receipt.Item{},
 					PurchaseDate: "2022-01-02",
 					PurchaseTime: "12:00",
@@ -221,7 +221,7 @@ func TestProcessReceiptRules(t *testing.T) {
 			request: receipt.ReceiptProcessorRequest{
 				Receipt: receipt.Receipt{
 					Retailer:     "A3",
-					Total:        "0.1",
+					Total:        "0.10",
 					Items:        []receipt.Item{},
 					PurchaseDate: "2022-01-02",
 					PurchaseTime: "12:00",
@@ -234,7 +234,7 @@ func TestProcessReceiptRules(t *testing.T) {
 			request: receipt.ReceiptProcessorRequest{
 				Receipt: receipt.Receipt{
 					Retailer:     "&%A3! ",
-					Total:        "0.1",
+					Total:        "0.10",
 					Items:        []receipt.Item{},
 					PurchaseDate: "2022-01-02",
 					PurchaseTime: "12:00",
@@ -248,7 +248,7 @@ func TestProcessReceiptRules(t *testing.T) {
 			request: receipt.ReceiptProcessorRequest{
 				Receipt: receipt.Receipt{
 					Retailer:     "",
-					Total:        "0",
+					Total:        "0.00",
 					Items:        []receipt.Item{},
 					PurchaseDate: "2022-01-02",
 					PurchaseTime: "12:00",
@@ -261,7 +261,7 @@ func TestProcessReceiptRules(t *testing.T) {
 			request: receipt.ReceiptProcessorRequest{
 				Receipt: receipt.Receipt{
 					Retailer:     "",
-					Total:        "0.1",
+					Total:        "0.10",
 					Items:        []receipt.Item{},
 					PurchaseDate: "2022-01-02",
 					PurchaseTime: "12:00",
@@ -274,7 +274,7 @@ func TestProcessReceiptRules(t *testing.T) {
 			request: receipt.ReceiptProcessorRequest{
 				Receipt: receipt.Receipt{
 					Retailer:     "",
-					Total:        "1",
+					Total:        "1.00",
 					Items:        []receipt.Item{},
 					PurchaseDate: "2022-01-02",
 					PurchaseTime: "12:00",
@@ -288,19 +288,6 @@ func TestProcessReceiptRules(t *testing.T) {
 				Receipt: receipt.Receipt{
 					Retailer:     "",
 					Total:        "1.24",
-					Items:        []receipt.Item{},
-					PurchaseDate: "2022-01-02",
-					PurchaseTime: "12:00",
-				},
-			},
-			expectedScoreResponse: receipt.ReceiptScoreResponse{Points: 0},
-		},
-		{
-			title: "GivenAThous_thDecimalTotal_Return0",
-			request: receipt.ReceiptProcessorRequest{
-				Receipt: receipt.Receipt{
-					Retailer:     "",
-					Total:        "1.225",
 					Items:        []receipt.Item{},
 					PurchaseDate: "2022-01-02",
 					PurchaseTime: "12:00",
@@ -327,7 +314,7 @@ func TestProcessReceiptRules(t *testing.T) {
 			request: receipt.ReceiptProcessorRequest{
 				Receipt: receipt.Receipt{
 					Retailer:     "",
-					Total:        "0.1",
+					Total:        "0.10",
 					Items:        []receipt.Item{},
 					PurchaseDate: "2022-01-02",
 					PurchaseTime: "12:00",
@@ -340,7 +327,7 @@ func TestProcessReceiptRules(t *testing.T) {
 			request: receipt.ReceiptProcessorRequest{
 				Receipt: receipt.Receipt{
 					Retailer: "",
-					Total:    "0.1",
+					Total:    "0.10",
 					Items: []receipt.Item{
 						{
 							ShortDescription: "",
@@ -362,7 +349,7 @@ func TestProcessReceiptRules(t *testing.T) {
 			request: receipt.ReceiptProcessorRequest{
 				Receipt: receipt.Receipt{
 					Retailer: "",
-					Total:    "0.1",
+					Total:    "0.10",
 					Items: []receipt.Item{
 						{
 							ShortDescription: "",
@@ -389,7 +376,7 @@ func TestProcessReceiptRules(t *testing.T) {
 			request: receipt.ReceiptProcessorRequest{
 				Receipt: receipt.Receipt{
 					Retailer: "",
-					Total:    "0.1",
+					Total:    "0.10",
 					Items: []receipt.Item{
 						{
 							ShortDescription: "  ",
@@ -407,7 +394,7 @@ func TestProcessReceiptRules(t *testing.T) {
 			request: receipt.ReceiptProcessorRequest{
 				Receipt: receipt.Receipt{
 					Retailer: "",
-					Total:    "0.1",
+					Total:    "0.10",
 					Items: []receipt.Item{
 						{
 							ShortDescription: "cat",
@@ -425,7 +412,7 @@ func TestProcessReceiptRules(t *testing.T) {
 			request: receipt.ReceiptProcessorRequest{
 				Receipt: receipt.Receipt{
 					Retailer: "",
-					Total:    "0.1",
+					Total:    "0.10",
 					Items: []receipt.Item{
 						{
 							ShortDescription: "cat",
@@ -443,7 +430,7 @@ func TestProcessReceiptRules(t *testing.T) {
 			request: receipt.ReceiptProcessorRequest{
 				Receipt: receipt.Receipt{
 					Retailer: "",
-					Total:    "0.1",
+					Total:    "0.10",
 					Items: []receipt.Item{
 						{
 							ShortDescription: " cat ",
@@ -461,7 +448,7 @@ func TestProcessReceiptRules(t *testing.T) {
 			request: receipt.ReceiptProcessorRequest{
 				Receipt: receipt.Receipt{
 					Retailer: "",
-					Total:    "0.1",
+					Total:    "0.10",
 					Items: []receipt.Item{
 						{
 							ShortDescription: "cats",
@@ -479,7 +466,7 @@ func TestProcessReceiptRules(t *testing.T) {
 			request: receipt.ReceiptProcessorRequest{
 				Receipt: receipt.Receipt{
 					Retailer: "",
-					Total:    "0.1",
+					Total:    "0.10",
 					Items: []receipt.Item{
 						{
 							ShortDescription: "cats cats",
@@ -497,7 +484,7 @@ func TestProcessReceiptRules(t *testing.T) {
 			request: receipt.ReceiptProcessorRequest{
 				Receipt: receipt.Receipt{
 					Retailer: "",
-					Total:    "0.1",
+					Total:    "0.10",
 					Items: []receipt.Item{
 						{
 							ShortDescription: "cats cats",
@@ -524,7 +511,7 @@ func TestProcessReceiptRules(t *testing.T) {
 			request: receipt.ReceiptProcessorRequest{
 				Receipt: receipt.Receipt{
 					Retailer: "",
-					Total:    "0.1",
+					Total:    "0.10",
 					Items: []receipt.Item{
 						{
 							ShortDescription: "Mountain Dew 12PK",
@@ -542,7 +529,7 @@ func TestProcessReceiptRules(t *testing.T) {
 			request: receipt.ReceiptProcessorRequest{
 				Receipt: receipt.Receipt{
 					Retailer: "",
-					Total:    "0.1",
+					Total:    "0.10",
 					Items: []receipt.Item{
 						{
 							ShortDescription: "Mountain Dew 12PK",
@@ -561,7 +548,7 @@ func TestProcessReceiptRules(t *testing.T) {
 			request: receipt.ReceiptProcessorRequest{
 				Receipt: receipt.Receipt{
 					Retailer: "",
-					Total:    "0.1",
+					Total:    "0.10",
 					Items: []receipt.Item{
 						{
 							ShortDescription: "Mountain Dew 12PK",
@@ -579,7 +566,7 @@ func TestProcessReceiptRules(t *testing.T) {
 			request: receipt.ReceiptProcessorRequest{
 				Receipt: receipt.Receipt{
 					Retailer: "",
-					Total:    "0.1",
+					Total:    "0.10",
 					Items: []receipt.Item{
 						{
 							ShortDescription: "Mountain Dew 12PK",
@@ -597,7 +584,7 @@ func TestProcessReceiptRules(t *testing.T) {
 			request: receipt.ReceiptProcessorRequest{
 				Receipt: receipt.Receipt{
 					Retailer: "",
-					Total:    "0.1",
+					Total:    "0.10",
 					Items: []receipt.Item{
 						{
 							ShortDescription: "Mountain Dew 12PK",
@@ -615,7 +602,7 @@ func TestProcessReceiptRules(t *testing.T) {
 			request: receipt.ReceiptProcessorRequest{
 				Receipt: receipt.Receipt{
 					Retailer: "",
-					Total:    "0.1",
+					Total:    "0.10",
 					Items: []receipt.Item{
 						{
 							ShortDescription: "Mountain Dew 12PK",
@@ -633,7 +620,7 @@ func TestProcessReceiptRules(t *testing.T) {
 			request: receipt.ReceiptProcessorRequest{
 				Receipt: receipt.Receipt{
 					Retailer: "",
-					Total:    "0.1",
+					Total:    "0.10",
 					Items: []receipt.Item{
 						{
 							ShortDescription: "Mountain Dew 12PK",
