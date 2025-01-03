@@ -24,4 +24,5 @@ var ErrorToCodes = []StatusMessage{
 	{Code: http.StatusOK, Name: "StatusOK", Message: "Success!"},
 	{Code: http.StatusNotFound, Name: "ErrNotFound", Message: "No receipt found for that ID."},
 	{Code: http.StatusBadRequest, Name: "ErrBadRequest", Message: "The receipt is invalid."},
+	{Code: http.StatusInternalServerError, Name: "ErrInternalServer", Message: "Internal services have failed"},
 }
