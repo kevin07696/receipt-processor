@@ -34,7 +34,7 @@ func main() {
 	logger := slog.New(h)
 	slog.SetDefault(logger)
 
-	cache := caches.NewLRUCache(200000)
+	cache := caches.NewLRUCache(env.CacheCap)
 	var repository dReceipt.IReceiptProcessorRepository = dReceipt.NewReceiptProcessorRepository(&cache)
 
 	env.Options.GenerateID = func(input string) string {
@@ -71,6 +71,7 @@ func main() {
 type Config struct {
 	AppEnv      string
 	Port        int
+	CacheCap    int
 	Multipliers dReceipt.Multipliers
 	Options     dReceipt.Options
 }
@@ -91,6 +92,7 @@ func loadEnvConfig() Config {
 		"TOTAL_MULTIPLE":       float64(0),
 		"ITEMS_MULTIPLE":       int64(0),
 		"DESCRIPTION_MULTIPLE": int64(0),
+		"CACHE_CAP":            int(0),
 	}
 
 	for k := range env {
@@ -103,15 +105,15 @@ func loadEnvConfig() Config {
 		switch env[k].(type) {
 		case string:
 			env[k] = val
-		case int64:
-			if parsedVal, err := strconv.ParseUint(val, 10, 16); err == nil {
-				env[k] = int64(parsedVal)
-			} else {
-				log.Fatalf("Error parsing %s: %v", k, err)
-			}
 		case int:
 			if parsedVal, err := strconv.ParseInt(val, 10, 64); err == nil {
 				env[k] = int(parsedVal)
+			} else {
+				log.Fatalf("Error parsing %s: %v", k, err)
+			}
+		case int64:
+			if parsedVal, err := strconv.ParseUint(val, 10, 16); err == nil {
+				env[k] = int64(parsedVal)
 			} else {
 				log.Fatalf("Error parsing %s: %v", k, err)
 			}
@@ -127,8 +129,9 @@ func loadEnvConfig() Config {
 	}
 
 	config := Config{
-		AppEnv: env["APP_ENV"].(string),
-		Port:   env["APP_PORT"].(int),
+		AppEnv:   env["APP_ENV"].(string),
+		Port:     env["APP_PORT"].(int),
+		CacheCap: env["CACHE_CAP"].(int),
 		Multipliers: dReceipt.Multipliers{
 			Retailer:       env["MULT_RECEIPT"].(int64),
 			RoundTotal:     env["MULT_ROUND_TOTAL"].(int64),
