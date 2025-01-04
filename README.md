@@ -219,3 +219,26 @@ OK
 - **Cons to `Slice`**
   - It is not built-in to be concurrent
   - It also would work poorly with uuids. UUIDs can convert into a uint for indexing, but it isn't guaranteed to be sequential.
+
+## Error Log Book
+
+### Fatal Errors
+Since I didn't see a response scenario for 500 errors in the api.yaml, I am trying to set a system that immediately exits when the container/application instance is unhealthy. Then, it spins up a healthy container. This was popularized by Erlang where sometimes older instances can become unhealthy. Since Erlang applications are known for their persistence, it is appropriate for them to spin up a new fresh container. However, a lot of these errors might be better as `Bad Requests`, but the issue isn't just the request, but the possible missing validation that allowed it to occur.
+
+1. `Error loading .env file`
+   - Environmental variables are required. I would check that the .env file is at the root to access. Also, check the same for the docker container. If the file is not placed at the root with main.go, then main() won't be able to find env. 
+2. `Server failed to start: %v`
+   - Server can fail for a number of reasons:
+      - Check that it is not the middleware.
+      - Check that the host and container ports are available
+3. `Error parsing %s: %v`
+   - Check environmental variables to make sure the types can match config
+4. `Unsupported type for environment variable %s"`
+   - This can happen if you add/update variables, but don't update the config parsing method to support that new type
+5. `Failed to store value: %v: %v`
+   - This log is in BigCache's set method. This is can happen if the allocated memory can not fit an element. To use the api, you can allocate for more memory
+6. `Failed to parse %s, %s. Check validation: %v`
+   - This I would usually run as a bad request error; however, the api.yaml did not have a 500 error type.
+   - Also, it should not happen, so if it does then that means that sample should be recorded to support the validation error
+7. `Failed to marshal response: %v`
+   - This should not happen since the response is created by the application with zero data from request. Thus, if you get this message I would check the logged response to see why it is invalid and then look into the logic used to wrap the response.
