@@ -13,6 +13,76 @@ A challenge given by fetch-rewards
 | GET    | /receipts/{id}/points  | URL Path Parameter `ID` string    | JSON body with `Points` (int64)    |
 | GET    | /health                | None                              | JSON body with status `OK`         |
 
+## Installation
+
+1. **Clone the Repository:**
+   ```bash
+   git clone https://github.com/yourusername/your-api-repo.git
+   cd your-api-repo
+2. **Build Docker Image:**
+   ```bash
+   docker build -t receipt-processor
+   ```
+4. **Run Docker Container:**
+  ```bash
+  docker run -d -p 3000:8080 receipt-processor
+  ```
+** Optionally you can also run Docker Compose and use the health check to monitor container health
+1. **Build containers with Docker Compose:**
+ ```bash
+ docker-compose build
+ ```
+2. **Run containers with Docker Compose:**
+```bash
+docker-compose up
+```
+3. **To stop and remove the containers, networks, and volumes**
+```bash
+docker-compose up
+```
+## Environment Variables
+### Config Variables
+1. HOST_PORT=3000
+   - Definition: Host port specifies the port the application is listening to on the host machine
+2. APP_PORT=8080
+   - Definition: App port specifies the port the application is listening to inside the container
+   - Example: If the application's port specification is `3000:8080`, if you are making calls inside the container you are sending requests to `8080`, but from your local machine you would be calling `http://localhost:3000`  
+3. APP_ENV=DEVELOPMENT
+   - Usage: This variable is to toggle environmental settings.
+   - Example: In this application, logging level and logging handler is determined by environment. In development, I am running in debug level with a plain text log handler. In production it is info level with a JSON log handler 
+4. CACHE_CAP=200000
+  - Definition: Cache's capacity is based on the number elements.
+  - Usage: Determine the space allocated for the application / the space allocated for one item to determine the capacity*2. This way you only use half the allocated memory. 
+
+### Multiplier Variables
+1. MULT_RECEIPT=1
+   - Definition: Multiplier for receipt name score
+2. MULT_ROUND_TOTAL=50
+   - Definition: Multiplier for round total score
+3. MULT_DIVISIBLE_TOTAL=25
+   - Definition: Multiplier for score, in which the total is divisible by 0.25
+4. MULT_ITEMS=5
+   - Definition: Multiplier for each pair of items
+5. MULT_DESCRIPTION=0.2
+   - Definition: Multplier for short description
+6. MULT_PURCHASE_TIME=10
+   - Definition: Multiplier for purchase time  
+7. MULT_PURCHASE_DATE=6
+    - Definition: Multiplier for purchase date
+
+### Score Rule Variables
+1. START_TIME=14:00
+   - Definition: Specify the purchase start time
+2. END_TIME=16:00
+   - Definition: Specify the purchase end time
+   - Usage: Start time needs to be before end time
+3. TOTAL_MULTIPLE=0.25
+   - Definition: Total's divisible conditional. The default is 0.25.
+4. ITEMS_MULTIPLE=2
+   - Definition: Items' divisible conditional. The default is each pair gets a point. Thus, round down.
+5. DESCRIPTION_MULTIPLE=3
+   - Definition: Description length divisible condtional. Challenge specifies to round up.
+
 ## Models
 
 ### Receipt
