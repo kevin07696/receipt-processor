@@ -200,7 +200,7 @@ Outerloop:
 		// This should not happen unless price is not properly validated
 		price, err := strconv.ParseFloat(item.Price, 64)
 		if err != nil {
-			log.Fatalf("Failed to parse float, %s: %v", item.Price, err)
+			log.Fatalf("Failed to parse price, %s: %v", item.Price, err)
 		}
 
 		points = int64(math.Ceil(price * rps.mults.Description))
