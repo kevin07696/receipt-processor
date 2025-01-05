@@ -60,7 +60,7 @@ var mockRepository = MockReceiptRepository{
 func TestProcessReceipt(t *testing.T) {
 	request := receipt.ReceiptProcessorRequest{
 		Receipt: receipt.Receipt{
-			Retailer: "",
+			Retailer: "Target",
 			Total:    "0.10",
 			Items: []receipt.Item{
 				{
@@ -71,7 +71,7 @@ func TestProcessReceipt(t *testing.T) {
 			PurchaseDate: "2022-01-02",
 			PurchaseTime: "12:00",
 		},
-		ID: "id",
+		ID: "edef5a0a-7dc5-4b56-97a1-b0007f3d8355",
 	}
 
 	testCases := []struct {
@@ -88,6 +88,20 @@ func TestProcessReceipt(t *testing.T) {
 				},
 				WriteReceiptScoreMock: func(ctx context.Context, id string, points int64, scores map[string]int64) domain.StatusCode {
 					return domain.StatusOK
+				},
+			},
+			expectedResponse: receipt.ReceiptProcessorResponse{ID: request.ID},
+			expectedStatus:   domain.StatusOK,
+		},
+		{
+			title: "GivenARepeatedRequest_ReturnID",
+			mockRepository: MockReceiptRepository{
+				ReadReceiptScoreMock: func(ctx context.Context, id string, scores map[string]int64) (int64, domain.StatusCode) {
+					return 0, domain.StatusOK
+				},
+				// If write method runs, this test will fail. Status error is arbitrary.
+				WriteReceiptScoreMock: func(ctx context.Context, id string, points int64, scores map[string]int64) domain.StatusCode {
+					return domain.ErrInternal
 				},
 			},
 			expectedResponse: receipt.ReceiptProcessorResponse{ID: request.ID},

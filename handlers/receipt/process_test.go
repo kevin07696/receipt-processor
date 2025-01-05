@@ -3,14 +3,12 @@ package receipt_test
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/kevin07696/receipt-processor/domain"
 	dReceipt "github.com/kevin07696/receipt-processor/domain/receipt"
 	hReceipt "github.com/kevin07696/receipt-processor/handlers/receipt"
@@ -67,41 +65,6 @@ func TestUnmarshallingRequestBody(t *testing.T) {
 			assert.Equal(t, tt.expectedCode, responseRecorder.Code)
 		})
 	}
-}
-
-func TestGenerateIDsIdempotency(t *testing.T) {
-	generateID := func(input string) string {
-		if len(input) == 0 {
-			return uuid.NewString()
-		}
-
-		hash := sha256.Sum256([]byte(input))
-		hashBytes := hash[:16]
-		hashUUID, err := uuid.FromBytes(hashBytes)
-		if err != nil {
-			return uuid.NewString()
-		}
-
-		return hashUUID.String()
-	}
-
-	t.Run("GivenAValidRequest_ReturnTheSameID", func(t *testing.T) {
-		receipt := "{ \"retailer\": \"Walgreens\", \"purchaseDate\": \"2022-01-02\", \"purchaseTime\": \"08:13\", \"total\": \"2.65\", \"items\": [ {\"shortDescription\": \"Pepsi - 12-oz\", \"price\": \"1.25\"}, {\"shortDescription\": \"Dasani\", \"price\": \"1.40\"} ] }"
-
-		expectedId := generateID(receipt)
-
-		assert.Equal(t, expectedId, generateID(receipt))
-
-	})
-
-	t.Run("GivenAnEmptyRequest_ReturnDifferentIDs", func(t *testing.T) {
-		receipt := ""
-
-		expectedId := generateID(receipt)
-
-		assert.NotEqual(t, expectedId, generateID(receipt))
-	})
-
 }
 
 func TestReceiptProcessorHandler(t *testing.T) {

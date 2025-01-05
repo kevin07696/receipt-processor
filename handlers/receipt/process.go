@@ -34,10 +34,9 @@ func ProcessReceipt(receiptAPI receipt.IReceiptProcessorService) http.HandlerFun
 		if !input.Validate(ctx) {
 			http.Error(w, domain.ErrorToCodes[domain.ErrBadRequest].Message, domain.ErrorToCodes[domain.ErrBadRequest].Code)
 			return
-
 		}
 
-		id := receiptAPI.GenerateID(ctx, "")
+		id := receiptAPI.GenerateID(ctx, string(body))
 
 		response, status := receiptAPI.ProcessReceipt(ctx, receipt.ReceiptProcessorRequest{ID: id, Receipt: input})
 		if status > 0 {
