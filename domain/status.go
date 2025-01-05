@@ -10,8 +10,7 @@ const (
 	StatusOK      StatusCode = 0
 	ErrNotFound   StatusCode = 1
 	ErrBadRequest StatusCode = 2
-	ErrConflict   StatusCode = 3
-	ErrInternal   StatusCode = 4
+	ErrInternal   StatusCode = 3
 )
 
 type StatusMessage struct {

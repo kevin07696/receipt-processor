@@ -70,209 +70,247 @@ func TestUnmarshallingRequestBody(t *testing.T) {
 func TestReceiptProcessorHandler(t *testing.T) {
 	tests := []struct {
 		name             string
-		request          MockReceipt
+		request          dReceipt.Receipt
+		service          dReceipt.IReceiptProcessorService
 		expectedResponse dReceipt.ReceiptProcessorResponse
 		expectedCode     int
 	}{
 		{
 			name: "GivenAValidRequest_ReturnStatusOK",
-			request: MockReceipt{
+			request: dReceipt.Receipt{
 				Retailer:     "Target",
 				PurchaseDate: "2024-01-01",
 				PurchaseTime: "14:00",
-				Items: []MockItem{
+				Items: []dReceipt.Item{
 					{ShortDescription: "desc", Price: "2.00"},
 				},
 				Total: "2.00",
 			},
+			service: receiptAPI,
 			expectedCode:     http.StatusOK,
 			expectedResponse: dReceipt.ReceiptProcessorResponse{ID: "ID"},
 		},
 		{
-			name: "GivenAnEmptyRetailer_ReturnBadRequestError",
-			request: MockReceipt{
+			name: "GivenAValidRequest_ReturnServiceError",
+			request: dReceipt.Receipt{
+				Retailer:     "Target",
 				PurchaseDate: "2024-01-01",
 				PurchaseTime: "14:00",
-				Items: []MockItem{
+				Items: []dReceipt.Item{
 					{ShortDescription: "desc", Price: "2.00"},
 				},
 				Total: "2.00",
 			},
+			service: &MockReceiptService{
+				ProcessReceiptMock: func(ctx context.Context, request dReceipt.ReceiptProcessorRequest) (dReceipt.ReceiptProcessorResponse, domain.StatusCode) {
+					return dReceipt.ReceiptProcessorResponse{}, domain.ErrInternal
+				},
+				GenerateIDMock: func(ctx context.Context, input string) string {
+					return ""
+				},
+			},
+			expectedCode:     http.StatusInternalServerError,
+			expectedResponse: dReceipt.ReceiptProcessorResponse{},
+		},
+		{
+			name: "GivenAnEmptyRetailer_ReturnBadRequestError",
+			request: dReceipt.Receipt{
+				PurchaseDate: "2024-01-01",
+				PurchaseTime: "14:00",
+				Items: []dReceipt.Item{
+					{ShortDescription: "desc", Price: "2.00"},
+				},
+				Total: "2.00",
+			},
+			service: receiptAPI,
 			expectedCode: http.StatusBadRequest,
 		},
 		{
 			name: "GivenAnEmptyRetailer_ReturnBadRequestError",
-			request: MockReceipt{
+			request: dReceipt.Receipt{
 				Retailer:     "!@#$%^*()+",
 				PurchaseDate: "2024-01-01",
 				PurchaseTime: "14:00",
-				Items: []MockItem{
+				Items: []dReceipt.Item{
 					{ShortDescription: "desc", Price: "2.00"},
 				},
 				Total: "2.00",
 			},
+			service: receiptAPI,
 			expectedCode: http.StatusBadRequest,
 		},
 		{
 			name: "GivenAnEmptyPurchaseDate_ReturnBadRequestError",
-			request: MockReceipt{
+			request: dReceipt.Receipt{
 				Retailer:     "Target",
 				PurchaseDate: "",
 				PurchaseTime: "14:00",
-				Items: []MockItem{
+				Items: []dReceipt.Item{
 					{ShortDescription: "desc", Price: "2.00"},
 				},
 				Total: "2.00",
 			},
+			service: receiptAPI,
 			expectedCode: http.StatusBadRequest,
 		},
 		{
 			name: "GivenAnInvalidPurchaseDate_ReturnBadRequestError",
-			request: MockReceipt{
+			request: dReceipt.Receipt{
 				Retailer:     "Target",
 				PurchaseDate: "202A-01-01",
 				PurchaseTime: "14:00",
-				Items: []MockItem{
+				Items: []dReceipt.Item{
 					{ShortDescription: "desc", Price: "2.00"},
 				},
 				Total: "2.00",
 			},
+			service: receiptAPI,
 			expectedCode: http.StatusBadRequest,
 		},
 		{
 			name: "GivenAnInvalidPurchaseDateLength_ReturnBadRequestError",
-			request: MockReceipt{
+			request: dReceipt.Receipt{
 				Retailer:     "Target",
 				PurchaseDate: "24-01-01",
 				PurchaseTime: "14:00",
-				Items: []MockItem{
+				Items: []dReceipt.Item{
 					{ShortDescription: "desc", Price: "2.00"},
 				},
 				Total: "2.00",
 			},
+			service: receiptAPI,
 			expectedCode: http.StatusBadRequest,
 		},
 		{
 			name: "GivenAnEmptyPurchaseTime_ReturnBadRequestError",
-			request: MockReceipt{
+			request: dReceipt.Receipt{
 				Retailer:     "Target",
 				PurchaseDate: "2024-01-01",
 				PurchaseTime: "",
-				Items: []MockItem{
+				Items: []dReceipt.Item{
 					{ShortDescription: "desc", Price: "2.00"},
 				},
 				Total: "2.00",
 			},
+			service: receiptAPI,
 			expectedCode: http.StatusBadRequest,
 		},
 		{
 			name: "GivenAnInvalidPurchaseTime_ReturnBadRequestError",
-			request: MockReceipt{
+			request: dReceipt.Receipt{
 				Retailer:     "Target",
 				PurchaseDate: "2024-01-01",
 				PurchaseTime: "14:0A",
-				Items: []MockItem{
+				Items: []dReceipt.Item{
 					{ShortDescription: "desc", Price: "2.00"},
 				},
 				Total: "2.00",
 			},
+			service: receiptAPI,
 			expectedCode: http.StatusBadRequest,
 		},
 		{
 			name: "GivenAnInvalidPurchaseTimeLength_ReturnBadRequestError",
-			request: MockReceipt{
+			request: dReceipt.Receipt{
 				Retailer:     "Target",
 				PurchaseDate: "2024-01-01",
 				PurchaseTime: "14:00:01",
-				Items: []MockItem{
+				Items: []dReceipt.Item{
 					{ShortDescription: "desc", Price: "2.00"},
 				},
 				Total: "2.00",
 			},
+			service: receiptAPI,
 			expectedCode: http.StatusBadRequest,
 		},
 		{
 			name: "GivenAnEmptyItemList_ReturnBadRequestError",
-			request: MockReceipt{
+			request: dReceipt.Receipt{
 				Retailer:     "Target",
 				PurchaseDate: "2024-01-01",
 				PurchaseTime: "14:00",
-				Items:        []MockItem{},
+				Items:        []dReceipt.Item{},
 				Total:        "0",
 			},
+			service: receiptAPI,
 			expectedCode: http.StatusBadRequest,
 		},
 		{
 			name: "GivenAnEmptyItemDescription_ReturnBadRequestError",
-			request: MockReceipt{
+			request: dReceipt.Receipt{
 				Retailer:     "Target",
 				PurchaseDate: "2024-01-01",
 				PurchaseTime: "14:00",
-				Items: []MockItem{
+				Items: []dReceipt.Item{
 					{ShortDescription: "", Price: "2.00"},
 				},
 				Total: "2.00",
 			},
+			service: receiptAPI,
 			expectedCode: http.StatusBadRequest,
 		},
 		{
 			name: "GivenAnEmptyPrice_ReturnBadRequestError",
-			request: MockReceipt{
+			request: dReceipt.Receipt{
 				Retailer:     "Target",
 				PurchaseDate: "2024-01-01",
 				PurchaseTime: "14:00",
-				Items: []MockItem{
+				Items: []dReceipt.Item{
 					{ShortDescription: "desc", Price: ""},
 				},
 				Total: "2.00",
 			},
+			service: receiptAPI,
 			expectedCode: http.StatusBadRequest,
 		},
 		{
 			name: "GivenAnInvalidPrice_ReturnBadRequestError",
-			request: MockReceipt{
+			request: dReceipt.Receipt{
 				Retailer:     "Target",
 				PurchaseDate: "2024-01-01",
 				PurchaseTime: "14:00",
-				Items: []MockItem{
+				Items: []dReceipt.Item{
 					{ShortDescription: "desc", Price: "$7.00"},
 				},
 				Total: "2.00",
 			},
+			service: receiptAPI,
 			expectedCode: http.StatusBadRequest,
 		},
 		{
 			name: "GivenAnEmptyTotal_ReturnBadRequestError",
-			request: MockReceipt{
+			request: dReceipt.Receipt{
 				Retailer:     "Target",
 				PurchaseDate: "2024-01-01",
 				PurchaseTime: "14:00",
-				Items: []MockItem{
+				Items: []dReceipt.Item{
 					{ShortDescription: "desc", Price: "7.00"},
 				},
 				Total: "",
 			},
+			service: receiptAPI,
 			expectedCode: http.StatusBadRequest,
 		},
 		{
 			name: "GivenAnInvalidTotal_ReturnBadRequestError",
-			request: MockReceipt{
+			request: dReceipt.Receipt{
 				Retailer:     "Target",
 				PurchaseDate: "2024-01-01",
 				PurchaseTime: "14:00",
-				Items: []MockItem{
+				Items: []dReceipt.Item{
 					{ShortDescription: "desc", Price: "7.00"},
 				},
 				Total: "14.A",
 			},
+			service: receiptAPI,
 			expectedCode: http.StatusBadRequest,
 		},
 	}
 
-	handler := hReceipt.ProcessReceipt(receiptAPI)
-
+	
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			handler := hReceipt.ProcessReceipt(tt.service)
 			requestBody, err := json.Marshal(tt.request)
 			if err != nil {
 				t.Fatalf("Failed to marshall request: %v", err)
