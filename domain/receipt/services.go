@@ -60,6 +60,10 @@ func (rps *ReceiptProcessorService) GenerateID(ctx context.Context, input string
 }
 
 func (rps *ReceiptProcessorService) ProcessReceipt(ctx context.Context, request ReceiptProcessorRequest) (ReceiptProcessorResponse, domain.StatusCode) {
+	if _, status := rps.repository.ReadReceiptScore(ctx, request.ID); status == 0 {
+		return ReceiptProcessorResponse{ID: request.ID}, domain.StatusOK
+	}
+
 	var points int64
 	points += rps.pointsForEachAlphaNumeric(ctx, request.Receipt.Retailer)
 	points += rps.pointsForEachItemMultiples(ctx, len(request.Receipt.Items))
