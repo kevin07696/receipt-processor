@@ -140,6 +140,8 @@ receipt_processor  | time=2025-01-03T20:27:53.237Z level=DEBUG msg="3 Points - \
 receipt_processor  | time=2025-01-03T20:27:53.237Z level=DEBUG msg="3 Points - \"Klarbrunn 12-PK 12 FL OZ\" is 24 characters (a multiple of 3) item price of 12.00 * 0.20 = 2.40 is rounded up is 3" RequestID=cceb6b85-4c6c-4266-80d7-cbc0e1b9a4a3
 receipt_processor  | time=2025-01-03T20:27:53.237Z level=INFO msg="Total Points: 28" RequestID=cceb6b85-4c6c-4266-80d7-cbc0e1b9a4a3
 ```
+** The process method is now idempotent. The id is generated from the whole receipt request body. I tested that the receipt will generate the same uuid. Thus, the validation and point calculation will not run and not be logged for repeated requests.
+
 #### Response
 ```json
 {
