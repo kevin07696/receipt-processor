@@ -27,7 +27,7 @@ A challenge given by fetch-rewards
   ```bash
   docker run -d -p 3000:8080 receipt-processor
   ```
-** Optionally you can also run Docker Compose and use the health check to monitor container health
+** Optionally you can also run Docker Compose and use the health check to monitor and auto-restart containers `on-failure`
 1. **Build containers with Docker Compose:**
  ```bash
  docker-compose build
