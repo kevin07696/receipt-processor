@@ -1,4 +1,4 @@
-package receipt
+package health
 
 import "net/http"
 

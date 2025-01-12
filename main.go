@@ -15,6 +15,7 @@ import (
 	"github.com/kevin07696/receipt-processor/adapters/loggers"
 	dReceipt "github.com/kevin07696/receipt-processor/domain/receipt"
 	"github.com/kevin07696/receipt-processor/handlers"
+	"github.com/kevin07696/receipt-processor/handlers/health"
 	hReceipt "github.com/kevin07696/receipt-processor/handlers/receipt"
 )
 
@@ -57,6 +58,7 @@ func main() {
 	router := http.NewServeMux()
 
 	hReceipt.Handle(router, &receiptAPI)
+	health.Handle(router)
 
 	app := handlers.NewApp(env.Port, router)
 

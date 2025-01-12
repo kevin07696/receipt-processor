@@ -14,8 +14,6 @@ import (
 	"github.com/kevin07696/receipt-processor/domain/receipt"
 )
 
-var idKey = "id"
-
 func GetScore(receiptAPI receipt.IReceiptProcessorService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), time.Second)
