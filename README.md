@@ -38,7 +38,7 @@ docker-compose up
 ```
 3. **To stop and remove the containers, networks, and volumes**
 ```bash
-docker-compose up
+docker-compose down
 ```
 ## Environment Variables
 ### Config Variables
