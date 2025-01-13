@@ -21,7 +21,7 @@ A challenge given by fetch-rewards
    cd your-api-repo
 2. **Build Docker Image:**
    ```bash
-   docker build -t receipt-processor
+   docker build -t receipt-processor .
    ```
 4. **Run Docker Container:**
   ```bash
