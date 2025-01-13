@@ -7,6 +7,8 @@ services:
     ports:
       - ${HOST_PORT}:${APP_PORT}
     deploy:
+      update_config:
+        order: start-first
       replicas: 1
       restart_policy:
         condition: on-failure
