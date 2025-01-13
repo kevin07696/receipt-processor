@@ -161,6 +161,10 @@ receipt_processor  | time=2025-01-03T20:36:08.572Z level=INFO msg="Method GET, P
 ```
 GET http://localhost:3000/health
 ```
+#### Debug Level Logs
+```
+receipt_processor  | time=2025-01-13T02:33:10.302Z level=INFO msg="Method GET, Path: /health"
+```
 #### Response
 ```
 OK
