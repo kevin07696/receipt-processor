@@ -1,6 +1,8 @@
-package health
+package admin
 
-import "net/http"
+import (
+	"net/http"
+)
 
 func HealthCheck() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

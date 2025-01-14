@@ -2,29 +2,18 @@ package handlers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 )
 
-type App struct {
-	router *http.ServeMux
-	port   int
-}
-
-func NewApp(port int, router *http.ServeMux) *App {
-	a := &App{
-		router: router,
-		port:   port,
+func StartServer(port int, handler http.Handler) {
+	server := &http.Server{
+		Addr:    fmt.Sprintf(":%d", port),
+		Handler: handler,
 	}
 
-	return a
-}
-
-func (a *App) Run(middlewares ...Middleware) error {
-	middlewareChain := MiddlewareChain(middlewares...)
-	server := http.Server{
-		Addr:    fmt.Sprintf(":%d", a.port),
-		Handler: middlewareChain(a.router),
+	log.Printf("Starting server at :%d\n", port)
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("Server failed to start: %v", err)
 	}
-
-	return server.ListenAndServe()
 }
