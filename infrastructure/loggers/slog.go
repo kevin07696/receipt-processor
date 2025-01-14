@@ -29,18 +29,16 @@ func (h ContextHandler) Handle(ctx context.Context, r slog.Record) error {
 
 // AppendCtx adds an slog attribute to the provided context so that it will be
 // included in any Record created with such context
-func AppendCtx(parent context.Context, attr slog.Attr) context.Context {
+func AppendCtx(parent context.Context, attr ...slog.Attr) context.Context {
 	if parent == nil {
 		parent = context.Background()
 	}
 
-	if v, ok := parent.Value(SlogFields).([]slog.Attr); ok {
-		v = append(v, attr)
-		return context.WithValue(parent, SlogFields, v)
+	v, ok := parent.Value(SlogFields).([]slog.Attr)
+	if !ok {
+		v = []slog.Attr{}
 	}
 
-	v := []slog.Attr{}
-	v = append(v, attr)
+	v = append(v, attr...)
 	return context.WithValue(parent, SlogFields, v)
 }
-

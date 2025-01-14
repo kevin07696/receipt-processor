@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/kevin07696/receipt-processor/domain"
-	dReceipt "github.com/kevin07696/receipt-processor/domain/receipt"
-	hReceipt "github.com/kevin07696/receipt-processor/handlers/receipt"
+	receiptDomain "github.com/kevin07696/receipt-processor/domain/receipt"
+	receioptHandler "github.com/kevin07696/receipt-processor/handlers/receipt"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,18 +18,18 @@ func TestGetScores(t *testing.T) {
 	testCases := []struct {
 		title            string
 		id               string
-		expectedResponse dReceipt.ReceiptScoreResponse
+		expectedResponse receiptDomain.ReceiptScoreResponse
 		expectedCode     int
-		receiptAPI       dReceipt.IReceiptProcessorService
+		receiptAPI       receiptDomain.IReceiptProcessorService
 	}{
 		{
 			title:            "GivenAValidID_ReturnScore",
 			id:               "af523d7a-e8d0-4af0-8bbd-d2340a4da5a4",
-			expectedResponse: dReceipt.ReceiptScoreResponse{Points: 65535},
+			expectedResponse: receiptDomain.ReceiptScoreResponse{Points: 65535},
 			expectedCode:     http.StatusOK,
 			receiptAPI: &MockReceiptService{
-				GetReceiptScoreMock: func(ctx context.Context, request dReceipt.ReceiptScoreRequest) (dReceipt.ReceiptScoreResponse, domain.StatusCode) {
-					return dReceipt.ReceiptScoreResponse{Points: 65535}, domain.StatusOK
+				GetReceiptScoreMock: func(ctx context.Context, request receiptDomain.ReceiptScoreRequest) (receiptDomain.ReceiptScoreResponse, domain.StatusCode) {
+					return receiptDomain.ReceiptScoreResponse{Points: 65535}, domain.StatusOK
 				},
 			},
 		},
@@ -43,8 +43,8 @@ func TestGetScores(t *testing.T) {
 			id:           "af523d7a-e8d0-4af0-8bbd-d2340a4da5a4",
 			expectedCode: http.StatusNotFound,
 			receiptAPI: &MockReceiptService{
-				GetReceiptScoreMock: func(ctx context.Context, request dReceipt.ReceiptScoreRequest) (dReceipt.ReceiptScoreResponse, domain.StatusCode) {
-					return dReceipt.ReceiptScoreResponse{}, domain.ErrNotFound
+				GetReceiptScoreMock: func(ctx context.Context, request receiptDomain.ReceiptScoreRequest) (receiptDomain.ReceiptScoreResponse, domain.StatusCode) {
+					return receiptDomain.ReceiptScoreResponse{}, domain.ErrNotFound
 				},
 			},
 		},
@@ -52,7 +52,7 @@ func TestGetScores(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.title, func(t *testing.T) {
-			handler := hReceipt.GetScore(tc.receiptAPI)
+			handler := receioptHandler.GetScore(tc.receiptAPI)
 			url := fmt.Sprintf("/receipts/%s/points", tc.id)
 
 			request, err := http.NewRequest(http.MethodGet, url, nil)

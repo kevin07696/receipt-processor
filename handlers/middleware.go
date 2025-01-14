@@ -1,29 +1,26 @@
 package handlers
 
 import (
-	"log"
+	"fmt"
 	"log/slog"
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/kevin07696/receipt-processor/adapters/loggers"
+	"github.com/kevin07696/receipt-processor/infrastructure/loggers"
 )
 
 type Middleware func(http.Handler) http.HandlerFunc
 
-func MiddlewareChain(middleware ...Middleware) Middleware {
-	return func(next http.Handler) http.HandlerFunc {
-		for _, m := range middleware {
-			next = m(next)
-		}
-
-		return next.ServeHTTP
+func ChainMiddlewaresToHandler(handler http.Handler, middlewares ...Middleware) http.Handler {
+	for i := len(middlewares) - 1; i >= 0; i-- {
+		handler = middlewares[i](handler)
 	}
+	return handler
 }
 
 func RequestLoggerMiddleware(next http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("Method %s, Path: %s", r.Method, r.URL.Path)
+		slog.InfoContext(r.Context(), fmt.Sprintf("Method %s, Path: %s", r.Method, r.URL.Path))
 		next.ServeHTTP(w, r)
 	}
 }

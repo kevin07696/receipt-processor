@@ -10,17 +10,17 @@ import (
 	"testing"
 
 	"github.com/kevin07696/receipt-processor/domain"
-	dReceipt "github.com/kevin07696/receipt-processor/domain/receipt"
-	hReceipt "github.com/kevin07696/receipt-processor/handlers/receipt"
+	receiptDomain "github.com/kevin07696/receipt-processor/domain/receipt"
+	receiptHandler "github.com/kevin07696/receipt-processor/handlers/receipt"
 	"github.com/stretchr/testify/assert"
 )
 
-var receiptAPI dReceipt.IReceiptProcessorService = &MockReceiptService{
-	ProcessReceiptMock: func(ctx context.Context, request dReceipt.ReceiptProcessorRequest) (dReceipt.ReceiptProcessorResponse, domain.StatusCode) {
-		return dReceipt.ReceiptProcessorResponse{ID: "ID"}, domain.StatusOK
+var receiptAPI receiptDomain.IReceiptProcessorService = &MockReceiptService{
+	ProcessReceiptMock: func(ctx context.Context, request receiptDomain.ReceiptProcessorRequest) (receiptDomain.ReceiptProcessorResponse, domain.StatusCode) {
+		return receiptDomain.ReceiptProcessorResponse{ID: "ID"}, domain.StatusOK
 	},
-	GetReceiptScoreMock: func(ctx context.Context, request dReceipt.ReceiptScoreRequest) (dReceipt.ReceiptScoreResponse, domain.StatusCode) {
-		return dReceipt.ReceiptScoreResponse{}, domain.StatusOK
+	GetReceiptScoreMock: func(ctx context.Context, request receiptDomain.ReceiptScoreRequest) (receiptDomain.ReceiptScoreResponse, domain.StatusCode) {
+		return receiptDomain.ReceiptScoreResponse{}, domain.StatusOK
 	},
 	GenerateIDMock: func(ctx context.Context, input string) string {
 		return "ID"
@@ -50,7 +50,7 @@ func TestUnmarshallingRequestBody(t *testing.T) {
 		},
 	}
 
-	handler := hReceipt.ProcessReceipt(receiptAPI)
+	handler := receiptHandler.ProcessReceipt(receiptAPI)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -70,54 +70,54 @@ func TestUnmarshallingRequestBody(t *testing.T) {
 func TestReceiptProcessorHandler(t *testing.T) {
 	tests := []struct {
 		name             string
-		request          dReceipt.Receipt
-		service          dReceipt.IReceiptProcessorService
-		expectedResponse dReceipt.ReceiptProcessorResponse
+		request          receiptDomain.Receipt
+		service          receiptDomain.IReceiptProcessorService
+		expectedResponse receiptDomain.ReceiptProcessorResponse
 		expectedCode     int
 	}{
 		{
 			name: "GivenAValidRequest_ReturnStatusOK",
-			request: dReceipt.Receipt{
+			request: receiptDomain.Receipt{
 				Retailer:     "Target",
 				PurchaseDate: "2024-01-01",
 				PurchaseTime: "14:00",
-				Items: []dReceipt.Item{
+				Items: []receiptDomain.Item{
 					{ShortDescription: "desc", Price: "2.00"},
 				},
 				Total: "2.00",
 			},
 			service: receiptAPI,
 			expectedCode:     http.StatusOK,
-			expectedResponse: dReceipt.ReceiptProcessorResponse{ID: "ID"},
+			expectedResponse: receiptDomain.ReceiptProcessorResponse{ID: "ID"},
 		},
 		{
 			name: "GivenAValidRequest_ReturnServiceError",
-			request: dReceipt.Receipt{
+			request: receiptDomain.Receipt{
 				Retailer:     "Target",
 				PurchaseDate: "2024-01-01",
 				PurchaseTime: "14:00",
-				Items: []dReceipt.Item{
+				Items: []receiptDomain.Item{
 					{ShortDescription: "desc", Price: "2.00"},
 				},
 				Total: "2.00",
 			},
 			service: &MockReceiptService{
-				ProcessReceiptMock: func(ctx context.Context, request dReceipt.ReceiptProcessorRequest) (dReceipt.ReceiptProcessorResponse, domain.StatusCode) {
-					return dReceipt.ReceiptProcessorResponse{}, domain.ErrInternal
+				ProcessReceiptMock: func(ctx context.Context, request receiptDomain.ReceiptProcessorRequest) (receiptDomain.ReceiptProcessorResponse, domain.StatusCode) {
+					return receiptDomain.ReceiptProcessorResponse{}, domain.ErrInternal
 				},
 				GenerateIDMock: func(ctx context.Context, input string) string {
 					return ""
 				},
 			},
 			expectedCode:     http.StatusInternalServerError,
-			expectedResponse: dReceipt.ReceiptProcessorResponse{},
+			expectedResponse: receiptDomain.ReceiptProcessorResponse{},
 		},
 		{
 			name: "GivenAnEmptyRetailer_ReturnBadRequestError",
-			request: dReceipt.Receipt{
+			request: receiptDomain.Receipt{
 				PurchaseDate: "2024-01-01",
 				PurchaseTime: "14:00",
-				Items: []dReceipt.Item{
+				Items: []receiptDomain.Item{
 					{ShortDescription: "desc", Price: "2.00"},
 				},
 				Total: "2.00",
@@ -127,11 +127,11 @@ func TestReceiptProcessorHandler(t *testing.T) {
 		},
 		{
 			name: "GivenAnEmptyRetailer_ReturnBadRequestError",
-			request: dReceipt.Receipt{
+			request: receiptDomain.Receipt{
 				Retailer:     "!@#$%^*()+",
 				PurchaseDate: "2024-01-01",
 				PurchaseTime: "14:00",
-				Items: []dReceipt.Item{
+				Items: []receiptDomain.Item{
 					{ShortDescription: "desc", Price: "2.00"},
 				},
 				Total: "2.00",
@@ -141,11 +141,11 @@ func TestReceiptProcessorHandler(t *testing.T) {
 		},
 		{
 			name: "GivenAnEmptyPurchaseDate_ReturnBadRequestError",
-			request: dReceipt.Receipt{
+			request: receiptDomain.Receipt{
 				Retailer:     "Target",
 				PurchaseDate: "",
 				PurchaseTime: "14:00",
-				Items: []dReceipt.Item{
+				Items: []receiptDomain.Item{
 					{ShortDescription: "desc", Price: "2.00"},
 				},
 				Total: "2.00",
@@ -155,11 +155,11 @@ func TestReceiptProcessorHandler(t *testing.T) {
 		},
 		{
 			name: "GivenAnInvalidPurchaseDate_ReturnBadRequestError",
-			request: dReceipt.Receipt{
+			request: receiptDomain.Receipt{
 				Retailer:     "Target",
 				PurchaseDate: "202A-01-01",
 				PurchaseTime: "14:00",
-				Items: []dReceipt.Item{
+				Items: []receiptDomain.Item{
 					{ShortDescription: "desc", Price: "2.00"},
 				},
 				Total: "2.00",
@@ -169,11 +169,11 @@ func TestReceiptProcessorHandler(t *testing.T) {
 		},
 		{
 			name: "GivenAnInvalidPurchaseDateLength_ReturnBadRequestError",
-			request: dReceipt.Receipt{
+			request: receiptDomain.Receipt{
 				Retailer:     "Target",
 				PurchaseDate: "24-01-01",
 				PurchaseTime: "14:00",
-				Items: []dReceipt.Item{
+				Items: []receiptDomain.Item{
 					{ShortDescription: "desc", Price: "2.00"},
 				},
 				Total: "2.00",
@@ -183,11 +183,11 @@ func TestReceiptProcessorHandler(t *testing.T) {
 		},
 		{
 			name: "GivenAnEmptyPurchaseTime_ReturnBadRequestError",
-			request: dReceipt.Receipt{
+			request: receiptDomain.Receipt{
 				Retailer:     "Target",
 				PurchaseDate: "2024-01-01",
 				PurchaseTime: "",
-				Items: []dReceipt.Item{
+				Items: []receiptDomain.Item{
 					{ShortDescription: "desc", Price: "2.00"},
 				},
 				Total: "2.00",
@@ -197,11 +197,11 @@ func TestReceiptProcessorHandler(t *testing.T) {
 		},
 		{
 			name: "GivenAnInvalidPurchaseTime_ReturnBadRequestError",
-			request: dReceipt.Receipt{
+			request: receiptDomain.Receipt{
 				Retailer:     "Target",
 				PurchaseDate: "2024-01-01",
 				PurchaseTime: "14:0A",
-				Items: []dReceipt.Item{
+				Items: []receiptDomain.Item{
 					{ShortDescription: "desc", Price: "2.00"},
 				},
 				Total: "2.00",
@@ -211,11 +211,11 @@ func TestReceiptProcessorHandler(t *testing.T) {
 		},
 		{
 			name: "GivenAnInvalidPurchaseTimeLength_ReturnBadRequestError",
-			request: dReceipt.Receipt{
+			request: receiptDomain.Receipt{
 				Retailer:     "Target",
 				PurchaseDate: "2024-01-01",
 				PurchaseTime: "14:00:01",
-				Items: []dReceipt.Item{
+				Items: []receiptDomain.Item{
 					{ShortDescription: "desc", Price: "2.00"},
 				},
 				Total: "2.00",
@@ -225,11 +225,11 @@ func TestReceiptProcessorHandler(t *testing.T) {
 		},
 		{
 			name: "GivenAnEmptyItemList_ReturnBadRequestError",
-			request: dReceipt.Receipt{
+			request: receiptDomain.Receipt{
 				Retailer:     "Target",
 				PurchaseDate: "2024-01-01",
 				PurchaseTime: "14:00",
-				Items:        []dReceipt.Item{},
+				Items:        []receiptDomain.Item{},
 				Total:        "0",
 			},
 			service: receiptAPI,
@@ -237,11 +237,11 @@ func TestReceiptProcessorHandler(t *testing.T) {
 		},
 		{
 			name: "GivenAnEmptyItemDescription_ReturnBadRequestError",
-			request: dReceipt.Receipt{
+			request: receiptDomain.Receipt{
 				Retailer:     "Target",
 				PurchaseDate: "2024-01-01",
 				PurchaseTime: "14:00",
-				Items: []dReceipt.Item{
+				Items: []receiptDomain.Item{
 					{ShortDescription: "", Price: "2.00"},
 				},
 				Total: "2.00",
@@ -251,11 +251,11 @@ func TestReceiptProcessorHandler(t *testing.T) {
 		},
 		{
 			name: "GivenAnEmptyPrice_ReturnBadRequestError",
-			request: dReceipt.Receipt{
+			request: receiptDomain.Receipt{
 				Retailer:     "Target",
 				PurchaseDate: "2024-01-01",
 				PurchaseTime: "14:00",
-				Items: []dReceipt.Item{
+				Items: []receiptDomain.Item{
 					{ShortDescription: "desc", Price: ""},
 				},
 				Total: "2.00",
@@ -265,11 +265,11 @@ func TestReceiptProcessorHandler(t *testing.T) {
 		},
 		{
 			name: "GivenAnInvalidPrice_ReturnBadRequestError",
-			request: dReceipt.Receipt{
+			request: receiptDomain.Receipt{
 				Retailer:     "Target",
 				PurchaseDate: "2024-01-01",
 				PurchaseTime: "14:00",
-				Items: []dReceipt.Item{
+				Items: []receiptDomain.Item{
 					{ShortDescription: "desc", Price: "$7.00"},
 				},
 				Total: "2.00",
@@ -279,11 +279,11 @@ func TestReceiptProcessorHandler(t *testing.T) {
 		},
 		{
 			name: "GivenAnEmptyTotal_ReturnBadRequestError",
-			request: dReceipt.Receipt{
+			request: receiptDomain.Receipt{
 				Retailer:     "Target",
 				PurchaseDate: "2024-01-01",
 				PurchaseTime: "14:00",
-				Items: []dReceipt.Item{
+				Items: []receiptDomain.Item{
 					{ShortDescription: "desc", Price: "7.00"},
 				},
 				Total: "",
@@ -293,11 +293,11 @@ func TestReceiptProcessorHandler(t *testing.T) {
 		},
 		{
 			name: "GivenAnInvalidTotal_ReturnBadRequestError",
-			request: dReceipt.Receipt{
+			request: receiptDomain.Receipt{
 				Retailer:     "Target",
 				PurchaseDate: "2024-01-01",
 				PurchaseTime: "14:00",
-				Items: []dReceipt.Item{
+				Items: []receiptDomain.Item{
 					{ShortDescription: "desc", Price: "7.00"},
 				},
 				Total: "14.A",
@@ -310,7 +310,7 @@ func TestReceiptProcessorHandler(t *testing.T) {
 	
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := hReceipt.ProcessReceipt(tt.service)
+			handler := receiptHandler.ProcessReceipt(tt.service)
 			requestBody, err := json.Marshal(tt.request)
 			if err != nil {
 				t.Fatalf("Failed to marshall request: %v", err)
