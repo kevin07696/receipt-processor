@@ -2,12 +2,9 @@ package main
 
 import (
 	"crypto/sha256"
-	"log"
 	"log/slog"
 	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/google/uuid"
 
@@ -54,10 +51,10 @@ func main() {
 
 	receiptRouter := http.NewServeMux()
 	receiptHandlers.InitializeRoutes(receiptRouter, &receiptAPI)
-	
+
 	adminRouter := http.NewServeMux()
 	admin.InitializeRoutes(adminRouter)
-	
+
 	handler := handlers.ChainMiddlewaresToHandler(receiptRouter, handlers.RequestIDMiddleware, handlers.RequestLoggerMiddleware)
 
 	handlers.StartServer(env.AppPort, handler)
