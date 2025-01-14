@@ -54,19 +54,11 @@ func main() {
 
 	receiptRouter := http.NewServeMux()
 	receiptHandlers.InitializeRoutes(receiptRouter, &receiptAPI)
-	receiptHandler := handlers.ChainMiddlewaresToHandler(receiptRouter, handlers.RequestIDMiddleware, handlers.RequestLoggerMiddleware)
-
-	// TODO: router still is being accessed by host port
+	
 	adminRouter := http.NewServeMux()
 	admin.InitializeRoutes(adminRouter)
-	adminHandler := handlers.ChainMiddlewaresToHandler(adminRouter, handlers.RequestIDMiddleware, handlers.RequestLoggerMiddleware)
+	
+	handler := handlers.ChainMiddlewaresToHandler(receiptRouter, handlers.RequestIDMiddleware, handlers.RequestLoggerMiddleware)
 
-	go handlers.StartServer(env.AppPort, receiptHandler)
-	go handlers.StartServer(env.AdminPort, adminHandler)
-
-	// Wait for an interrupt signal to gracefully shutdown the application
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
-	<-quit
-	log.Println("Shutting down servers...")
+	handlers.StartServer(env.AppPort, handler)
 }
