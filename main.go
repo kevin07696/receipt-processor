@@ -66,7 +66,7 @@ func main() {
 
 	// Wait for an interrupt signal to gracefully shutdown the application
 	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt, syscall.SIGINT)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	<-quit
 	log.Println("Shutting down servers...")
 }
