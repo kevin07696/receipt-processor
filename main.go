@@ -55,7 +55,7 @@ func main() {
 	adminRouter := http.NewServeMux()
 	admin.InitializeRoutes(adminRouter)
 
-	handler := handlers.ChainMiddlewaresToHandler(receiptRouter, handlers.RequestIDMiddleware, handlers.RequestLoggerMiddleware)
+	handler := handlers.ChainMiddlewaresToHandler(receiptRouter, handlers.RequestIDMiddleware, handlers.LoggerMiddleware, handlers.ResponseHeaderMiddleware)
 
 	handlers.StartServer(env.AppPort, handler)
 }

@@ -18,7 +18,7 @@ func ChainMiddlewaresToHandler(handler http.Handler, middlewares ...Middleware) 
 	return handler
 }
 
-func RequestLoggerMiddleware(next http.Handler) http.HandlerFunc {
+func LoggerMiddleware(next http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		slog.InfoContext(r.Context(), fmt.Sprintf("Method %s, Path: %s", r.Method, r.URL.Path))
 		next.ServeHTTP(w, r)
@@ -32,4 +32,12 @@ func RequestIDMiddleware(next http.Handler) http.HandlerFunc {
 		ctx := loggers.AppendCtx(r.Context(), slog.String(RequestID, uuid.NewString()))
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
+}
+
+func ResponseHeaderMiddleware(next http.Handler) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		next.ServeHTTP(w, r)
+	})
 }
